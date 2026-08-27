@@ -1,4 +1,279 @@
 'use client';
+
+import React, { useState } from 'react';
+import { 
+  BarChart, Wallet, Users, FileText, Plus, Search, 
+  Printer, CheckCircle, TrendingUp, DollarSign, AlertCircle 
+} from 'lucide-react';
+
+export default function Home() {
+  const [activeTab, setActiveTab] = useState('caisse');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Données de démonstration
+  const [eleves, setEleves] = useState([
+    { id: 1, nom: 'SABO', prenom: 'Aurel', classe: '6ème A', fraisTotal: 150000, paye: 100000 },
+    { id: 2, nom: 'DOSCOU', prenom: 'Marie', classe: '3ème B', fraisTotal: 180000, paye: 180000 },
+    { id: 3, nom: 'KPADONOU', prenom: 'Jean', classe: 'Tle C', fraisTotal: 220000, paye: 110000 },
+  ]);
+
+  const [historique, setHistorique] = useState([
+    { id: 'REC-001', eleve: 'SABO Aurel', montant: 50000, date: '2026-08-27', motif: 'Tranche 2' },
+    { id: 'REC-002', eleve: 'DOSCOU Marie', montant: 80000, date: '2026-08-27', motif: 'Solde' },
+  ]);
+
+  // Formulaire d'encaissement
+  const [selectedEleveId, setSelectedEleveId] = useState('');
+  const [montantSaisi, setMontantSaisi] = useState('');
+  const [motifSaisi, setMotifSaisi] = useState('Scolarité');
+
+  const handleEncaissement = (e) => {
+    e.preventDefault();
+    if (!selectedEleveId || !montantSaisi) return;
+
+    const eleveId = parseInt(selectedEleveId);
+    const montant = parseFloat(montantSaisi);
+
+    // Mise à jour de l'élève
+    setEleves(eleves.map(el => {
+      if (el.id === eleveId) {
+        return { ...el, paye: el.paye + montant };
+      }
+      return el;
+    }));
+
+    const eleveObj = eleves.find(el => el.id === eleveId);
+
+    // Ajout à l'historique
+    const newRecette = {
+      id: `REC-00${historique.length + 1}`,
+      eleve: `${eleveObj.nom} ${eleveObj.prenom}`,
+      montant: montant,
+      date: new Date().toISOString().split('T')[0],
+      motif: motifSaisi
+    };
+
+    setHistorique([newRecette, ...historique]);
+    setMontantSaisi('');
+    alert('Paiement enregistré avec succès !');
+  };
+
+  const totalRecouvre = eleves.reduce((sum, el) => sum + el.paye, 0);
+  const totalAttendu = eleves.reduce((sum, el) => sum + el.fraisTotal, 0);
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans">
+      {/* Navbar Top */}
+      <header className="bg-blue-900 text-white p-4 shadow-md">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <Wallet className="h-6 w-6" /> ComptaÉcole v3
+          </h1>
+          <span className="bg-blue-800 text-xs px-3 py-1 rounded-full border border-blue-700">
+            Année Académique 2026-2027
+          </span>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto p-4 md:p-6">
+        {/* Navigation Onglets */}
+        <div className="flex border-b border-gray-200 mb-6 bg-white rounded-t-lg p-2 shadow-sm gap-2">
+          <button 
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition ${activeTab === 'dashboard' ? 'bg-blue-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <BarChart className="h-4 w-4" /> Tableau de Bord
+          </button>
+          <button 
+            onClick={() => setActiveTab('caisse')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition ${activeTab === 'caisse' ? 'bg-blue-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <Wallet className="h-4 w-4" /> Caisse & Encaissement
+          </button>
+          <button 
+            onClick={() => setActiveTab('eleves')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition ${activeTab === 'eleves' ? 'bg-blue-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <Users className="h-4 w-4" /> Élèves & Suivi
+          </button>
+          <button 
+            onClick={() => setActiveTab('historique')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition ${activeTab === 'historique' ? 'bg-blue-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FileText className="h-4 w-4" /> Historique / Reçus
+          </button>
+        </div>
+
+        {/* Dashboard Tab */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Total Recouvré</p>
+                  <p className="text-2xl font-bold text-green-600">{totalRecouvre.toLocaleString()} FCFA</p>
+                </div>
+                <div className="p-3 bg-green-50 text-green-600 rounded-lg"><TrendingUp /></div>
+              </div>
+              <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Reste à Recouvrer</p>
+                  <p className="text-2xl font-bold text-orange-600">{(totalAttendu - totalRecouvre).toLocaleString()} FCFA</p>
+                </div>
+                <div className="p-3 bg-orange-50 text-orange-600 rounded-lg"><AlertCircle /></div>
+              </div>
+              <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">Total Élèves</p>
+                  <p className="text-2xl font-bold text-blue-900">{eleves.length}</p>
+                </div>
+                <div className="p-3 bg-blue-50 text-blue-900 rounded-lg"><Users /></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Caisse Tab */}
+        {activeTab === 'caisse' && (
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm max-w-2xl mx-auto">
+            <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <DollarSign className="text-green-600" /> Nouvel Encaissement
+            </h2>
+            <form onSubmit={handleEncaissement} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sélectionner l'Élève</label>
+                <select 
+                  value={selectedEleveId} 
+                  onChange={(e) => setSelectedEleveId(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  required
+                >
+                  <option value="">-- Choisir un élève --</option>
+                  {eleves.map(el => (
+                    <option key={el.id} value={el.id}>
+                      {el.nom} {el.prenom} ({el.classe}) - Reste: {(el.fraisTotal - el.paye).toLocaleString()} FCFA
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Montant à Encaisser (FCFA)</label>
+                <input 
+                  type="number" 
+                  value={montantSaisi} 
+                  onChange={(e) => setMontantSaisi(e.target.value)}
+                  placeholder="Ex: 50000"
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Motif du Paiement</label>
+                <input 
+                  type="text" 
+                  value={motifSaisi} 
+                  onChange={(e) => setMotifSaisi(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full bg-blue-900 hover:bg-blue-800 text-white font-medium py-3 rounded-lg shadow transition flex justify-center items-center gap-2"
+              >
+                <Plus className="h-5 w-5" /> Valider le Paiement
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Élèves Tab */}
+        {activeTab === 'eleves' && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-4">Liste et Suivi des Paiements</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-gray-600 text-sm">
+                    <th className="p-3">Nom & Prénom</th>
+                    <th className="p-3">Classe</th>
+                    <th className="p-3">Total Scolarité</th>
+                    <th className="p-3">Montant Payé</th>
+                    <th className="p-3">Reste</th>
+                    <th className="p-3">Statut</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y text-sm text-gray-700">
+                  {eleves.map(el => {
+                    const reste = el.fraisTotal - el.paye;
+                    return (
+                      <tr key={el.id} className="hover:bg-gray-50">
+                        <td className="p-3 font-medium">{el.nom} {el.prenom}</td>
+                        <td className="p-3">{el.classe}</td>
+                        <td className="p-3">{el.fraisTotal.toLocaleString()} FCFA</td>
+                        <td className="p-3 text-green-600 font-semibold">{el.paye.toLocaleString()} FCFA</td>
+                        <td className="p-3 text-red-500 font-semibold">{reste.toLocaleString()} FCFA</td>
+                        <td className="p-3">
+                          {reste === 0 ? (
+                            <span className="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full font-medium">Solder</span>
+                          ) : (
+                            <span className="bg-yellow-100 text-yellow-800 text-xs px-2.5 py-1 rounded-full font-medium">En cours</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Historique Tab */}
+        {activeTab === 'historique' && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-4">Historique des Reçus</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-gray-600 text-sm">
+                    <th className="p-3">N° Reçu</th>
+                    <th className="p-3">Date</th>
+                    <th className="p-3">Élève</th>
+                    <th className="p-3">Motif</th>
+                    <th className="p-3">Montant</th>
+                    <th className="p-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y text-sm text-gray-700">
+                  {historique.map(rec => (
+                    <tr key={rec.id} className="hover:bg-gray-50">
+                      <td className="p-3 font-mono font-medium text-blue-900">{rec.id}</td>
+                      <td className="p-3">{rec.date}</td>
+                      <td className="p-3">{rec.eleve}</td>
+                      <td className="p-3">{rec.motif}</td>
+                      <td className="p-3 font-bold text-green-600">{rec.montant.toLocaleString()} FCFA</td>
+                      <td className="p-3">
+                        <button 
+                          onClick={() => window.print()}
+                          className="flex items-center gap-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md transition"
+                        >
+                          <Printer className="h-3.5 w-3.5" /> Imprimer
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}'use client';
 import { useState } from 'react';
 
 export default function Home() {
